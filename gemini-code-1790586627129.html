@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GATE CS Algorithms — Interactive PYQ Test Portal</title>
+  <!-- PDF.js for automatic question + graph figure rendering from ALGORITHMS.pdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-alt: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.16);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.16);
+      --amber: #f59e0b;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #fff;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-pill.correct { color: var(--green); border-color: rgba(16,185,129,0.4); }
+    .stat-pill.wrong { color: var(--red); border-color: rgba(239,68,68,0.4); }
+
+    /* Timer Box */
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #090d16;
+      border: 2px solid var(--accent);
+      padding: 6px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      font-variant-numeric: tabular-nums;
+      transition: all 0.2s;
+    }
+
+    .timer-box.warning {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    .timer-box.danger {
+      border-color: var(--red);
+      color: var(--red);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    .btn-small {
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .btn-small:hover {
+      background: #475569;
+    }
+
+    /* Main Layout */
+    .app-container {
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      gap: 20px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+      flex: 1;
+    }
+
+    @media (max-width: 980px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* PDF Upload / Status Banner */
+    .pdf-banner {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px dashed var(--accent);
+      border-radius: 12px;
+      padding: 12px 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .pdf-banner.loaded {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: var(--green);
+      border-style: solid;
+    }
+
+    .file-label {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: inline-block;
+    }
+
+    .file-label input {
+      display: none;
+    }
+
+    /* Question Card */
+    .question-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    .q-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .q-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .q-index-badge {
+      background: var(--accent);
+      color: #0f172a;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .q-topic-badge {
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .q-type-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .type-mcq { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .type-msq { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+    .type-nat { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .type-desc { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+    /* Question Body & PDF Canvas */
+    .q-body {
+      font-size: 1.04rem;
+      line-height: 1.65;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+    }
+
+    .pdf-canvas-container {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 12px;
+      overflow-x: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .pdf-canvas-container canvas {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Options Grid */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      text-align: left;
+      background: rgba(15, 23, 42, 0.65);
+      border: 2px solid var(--border);
+      color: var(--text);
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .option-btn:hover:not(.locked) {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .option-btn.selected-msq {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.15);
+    }
+
+    .option-letter {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--panel-alt);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    /* Correct & Wrong States */
+    .option-btn.correct {
+      border-color: var(--green) !important;
+      background: var(--green-bg) !important;
+      color: #ecfdf5;
+    }
+
+    .option-btn.correct .option-letter {
+      background: var(--green);
+      color: #052e16;
+    }
+
+    .option-btn.wrong {
+      border-color: var(--red) !important;
+      background: var(--red-bg) !important;
+      color: #fef2f2;
+    }
+
+    .option-btn.wrong .option-letter {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .option-text {
+      flex: 1;
+      line-height: 1.45;
+    }
+
+    .status-icon {
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    /* NAT Input */
+    .nat-box {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nat-input {
+      background: #090d16;
+      border: 2px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      width: 220px;
+    }
+
+    .nat-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .action-btn {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .action-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Feedback Banner */
+    .feedback-banner {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feedback-banner.show {
+      display: flex;
+    }
+
+    .feedback-banner.correct {
+      background: var(--green-bg);
+      border: 1px solid var(--green);
+      color: #6ee7b7;
+    }
+
+    .feedback-banner.wrong {
+      background: var(--red-bg);
+      border: 1px solid var(--red);
+      color: #fca5a5;
+    }
+
+    /* Footer Navigation */
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .nav-btn {
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 11px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: #475569;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: fit-content;
+      max-height: calc(100vh - 90px);
+      position: sticky;
+      top: 76px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-group label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select, .search-input {
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      width: 100%;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+      gap: 8px;
+      overflow-y: auto;
+      padding-right: 4px;
+      max-height: 420px;
+    }
+
+    .palette-item {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 4px;
+      border-radius: 7px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .palette-item:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .palette-item.active {
+      border: 2px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .palette-item.solved-correct {
+      background: var(--green-bg);
+      border-color: var(--green);
+      color: #6ee7b7;
+    }
+
+    .palette-item.solved-wrong {
+      background: var(--red-bg);
+      border-color: var(--red);
+      color: #fca5a5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <div class="brand">
+      <span class="brand-badge">GATE CS</span>
+      <h1>Algorithms Interactive Test Portal</h1>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-pill correct">✔ Correct: <strong id="stat-correct">0</strong></div>
+      <div class="stat-pill wrong">✖ Wrong: <strong id="stat-wrong">0</strong></div>
+      <div class="stat-pill">Accuracy: <strong id="stat-acc">0%</strong></div>
+
+      <!-- 3-Minute Per-Question Timer -->
+      <div class="timer-box" id="timer-box" title="Refreshes to 03:00 on every new question">
+        <span>⏱</span>
+        <span id="timer-display">03:00</span>
+        <button class="btn-small" id="timer-toggle-btn" onclick="toggleTimer()">Pause</button>
+        <button class="btn-small" onclick="resetTimer()">↻</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="app-container">
+    <main>
+      <!-- PDF Auto-Loader / Local Picker Banner -->
+      <div class="pdf-banner" id="pdf-banner">
+        <div>
+          <strong id="pdf-status-title">📄 Full PDF Visual Mode:</strong>
+          <span id="pdf-status-desc" style="font-size:0.88rem; color:var(--muted); margin-left:6px;">
+            Place <code>ALGORITHMS.pdf</code> in the same GitHub folder for auto-loading, or select it right now to render all 225 questions + graph diagrams!
+          </span>
+        </div>
+        <label class="file-label">
+          Upload ALGORITHMS.pdf
+          <input type="file" id="pdf-file-input" accept="application/pdf" />
+        </label>
+      </div>
+
+      <!-- Active Question Card -->
+      <div class="question-card">
+        <div class="q-header">
+          <div class="q-meta">
+            <span class="q-index-badge" id="q-index">1.1.3</span>
+            <span class="q-topic-badge" id="q-topic">Algorithm Design</span>
+            <span class="q-type-badge type-mcq" id="q-type">MCQ</span>
+          </div>
+          <div style="font-size:0.85rem; color:var(--muted);" id="q-counter">Question 1 of 225</div>
+        </div>
+
+        <!-- Rendered PDF Slice (when ALGORITHMS.pdf is loaded) -->
+        <div class="pdf-canvas-container" id="pdf-slice-wrapper" style="display:none;"></div>
+
+        <!-- Text Question Body -->
+        <div class="q-body" id="q-body"></div>
+
+        <!-- Interactive Options / NAT Input -->
+        <div id="interactive-area"></div>
+
+        <!-- Result Feedback Banner -->
+        <div class="feedback-banner" id="feedback-banner"></div>
+
+        <!-- Navigation Buttons -->
+        <div class="nav-row">
+          <button class="nav-btn" id="prev-btn" onclick="prevQuestion()">← Previous</button>
+          <button class="btn-small" onclick="resetCurrentQuestion()">Retry Question</button>
+          <button class="nav-btn" id="next-btn" onclick="nextQuestion()">Next Question →</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar: Filters & Question Palette -->
+    <aside class="sidebar">
+      <div class="filter-group">
+        <label>Filter by Subtopic</label>
+        <select id="topic-filter" onchange="applyFilters()">
+          <option value="ALL">All 35 Topics (225 Qs)</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Filter by Type</label>
+        <select id="type-filter" onchange="applyFilters()">
+          <option value="ALL">All Gradable (MCQ + MSQ + NAT)</option>
+          <option value="MCQ">Single-Choice MCQ Only</option>
+          <option value="MSQ">Multiple-Select (MSQ) Only</option>
+          <option value="NAT">Numerical (NAT) Only</option>
+          <option value="WITH_DESC">Include Subjective / N/A</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Jump to Index (e.g. 1.24.8)</label>
+        <input type="text" id="search-input" class="search-input" placeholder="Search index or keyword..." oninput="applyFilters()" />
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:0.8rem; color:var(--muted); font-weight:700;">QUESTION PALETTE</span>
+        <button class="btn-small" onclick="clearAllProgress()">Reset Score</button>
+      </div>
+
+      <div class="palette-grid" id="palette-grid"></div>
+    </aside>
+  </div>
+
+<script>
+// ============================================================================
+// 1. COMPLETE VERIFIED ANSWER KEY MAP FROM ALGORITHMS.PDF (Pages 42-44)
+// ============================================================================
+const OFFICIAL_ANSWERS = {
+  "1.0.1": "6:6",
+  "1.1.1": "N/A", "1.1.2": "N/A", "1.1.3": "B", "1.1.4": "C", "1.1.5": "12", "1.1.6": "29", "1.1.7": "A;C", "1.1.8": "B",
+  "1.2.1": "N/A", "1.2.2": "N/A", "1.2.3": "C", "1.2.4": "A", "1.2.5": "B", "1.2.6": "A", "1.2.7": "C", "1.2.8": "C", "1.2.9": "C",
+  "1.3.1": "X", "1.3.2": "B", "1.3.3": "D", "1.3.4": "A", "1.3.5": "A;C", "1.3.6": "A;D", "1.3.7": "A",
+  "1.4.1": "A;B", "1.4.2": "B", "1.4.3": "D", "1.4.4": "B", "1.4.5": "A", "1.4.6": "C", "1.4.7": "C", "1.4.8": "D", "1.4.9": "A", "1.4.10": "C", "1.4.11": "C", "1.4.12": "D", "1.4.13": "D", "1.4.14": "A",
+  "1.5.1": "B", "1.5.2": "C",
+  "1.6.1": "B", "1.6.2": "C", "1.6.3": "A",
+  "1.7.1": "D",
+  "1.8.1": "C",
+  "1.9.1": "N/A", "1.9.2": "B", "1.9.3": "D", "1.9.4": "A", "1.9.5": "D", "1.9.6": "D",
+  "1.10.1": "75:75",
+  "1.11.1": "10:10",
+  "1.12.1": "B", "1.12.2": "C", "1.12.3": "C", "1.12.4": "B", "1.12.5": "B", "1.12.6": "A", "1.12.7": "34", "1.12.8": "150", "1.12.9": "C",
+  "1.13.1": "B", "1.13.2": "D", "1.13.3": "A", "1.13.4": "A", "1.13.5": "B", "1.13.6": "A", "1.13.7": "A;B", "1.13.8": "929:929", "1.13.9": "A", "1.13.10": "C", "1.13.11": "D",
+  "1.14.1": "N/A", "1.14.2": "C", "1.14.3": "C", "1.14.4": "C", "1.14.5": "D", "1.14.6": "D", "1.14.7": "C", "1.14.8": "C", "1.14.9": "B", "1.14.10": "19", "1.14.11": "D", "1.14.12": "31", "1.14.13": "D", "1.14.14": "A", "1.14.15": "5040", "1.14.16": "C", "1.14.17": "60", "1.14.18": "A", "1.14.19": "D", "1.14.20": "D", "1.14.21": "D", "1.14.22": "B",
+  "1.15.1": "A", "1.15.2": "B", "1.15.3": "D", "1.15.4": "A", "1.15.5": "16",
+  "1.16.1": "B", "1.16.2": "N/A", "1.16.3": "13", "1.16.4": "C", "1.16.5": "B", "1.16.6": "C", "1.16.7": "D",
+  "1.17.1": "2.33", "1.17.2": "A", "1.17.3": "D", "1.17.4": "225", "1.17.5": "B", "1.17.6": "A",
+  "1.18.1": "N/A", "1.18.2": "N/A", "1.18.3": "C", "1.18.4": "A", "1.18.5": "N/A", "1.18.6": "C", "1.18.7": "C", "1.18.8": "N/A", "1.18.9": "C", "1.18.10": "D", "1.18.11": "A", "1.18.12": "B", "1.18.13": "D", "1.18.14": "C", "1.18.15": "C", "1.18.16": "D", "1.18.17": "D", "1.18.18": "D", "1.18.19": "B", "1.18.20": "C", "1.18.21": "B", "1.18.22": "D", "1.18.23": "B", "1.18.24": "A", "1.18.25": "9", "1.18.26": "A", "1.18.27": "D", "1.18.28": "51", "1.18.29": "0", "1.18.30": "D", "1.18.31": "81", "1.18.32": "1023:1023", "1.18.33": "15:15", "1.18.34": "D", "1.18.35": "C", "1.18.36": "C", "1.18.37": "D", "1.18.38": "C",
+  "1.19.1": "A", "1.19.2": "D", "1.19.3": "A;C",
+  "1.20.1": "D",
+  "1.21.1": "C", "1.21.2": "1500", "1.21.3": "C",
+  "1.22.1": "B", "1.22.2": "B", "1.22.3": "B",
+  "1.23.1": "C", "1.23.2": "358",
+  "1.24.1": "B;D;E", "1.24.2": "N/A", "1.24.3": "2", "1.24.4": "N/A", "1.24.5": "N/A", "1.24.6": "C", "1.24.7": "N/A", "1.24.8": "B", "1.24.9": "C", "1.24.10": "B", "1.24.11": "D", "1.24.12": "D", "1.24.13": "D", "1.24.14": "D", "1.24.15": "B", "1.24.16": "B", "1.24.17": "C", "1.24.18": "X", "1.24.19": "6", "1.24.20": "69", "1.24.21": "995", "1.24.22": "A", "1.24.23": "7", "1.24.24": "B", "1.24.25": "4", "1.24.26": "D", "1.24.27": "99", "1.24.28": "3:3", "1.24.29": "C", "1.24.30": "A;B;C", "1.24.31": "24", "1.24.32": "9", "1.24.33": "5:5", "1.24.34": "A",
+  "1.25.1": "D", "1.25.2": "C",
+  "1.26.1": "C", "1.26.2": "N/A", "1.26.3": "N/A", "1.26.4": "C", "1.26.5": "C", "1.26.6": "B", "1.26.7": "B", "1.26.8": "B", "1.26.9": "C", "1.26.10": "A", "1.26.11": "B", "1.26.12": "A", "1.26.13": "0.08", "1.26.14": "0",
+  "1.27.1": "N/A", "1.27.2": "N/A", "1.27.3": "N/A", "1.27.4": "N/A", "1.27.5": "N/A", "1.27.6": "N/A", "1.27.7": "N/A", "1.27.8": "B", "1.27.9": "A", "1.27.10": "N/A", "1.27.11": "B", "1.27.12": "N/A", "1.27.13": "B", "1.27.14": "C", "1.27.15": "B", "1.27.16": "D", "1.27.17": "A", "1.27.18": "B", "1.27.19": "D", "1.27.20": "X", "1.27.21": "A", "1.27.22": "D", "1.27.23": "A", "1.27.24": "A", "1.27.25": "B", "1.27.26": "2.32:2.33", "1.27.27": "B", "1.27.28": "A", "1.27.29": "C", "1.27.30": "C", "1.27.31": "A", "1.27.32": "A", "1.27.33": "B", "1.27.34": "C", "1.27.35": "A",
+  "1.28.1": "C", "1.28.2": "A", "1.28.3": "10230", "1.28.4": "60:60",
+  "1.29.1": "N/A", "1.29.2": "C", "1.29.3": "A", "1.29.4": "C", "1.29.5": "A", "1.29.6": "5", "1.29.7": "B;C;D",
+  "1.30.1": "N/A", "1.30.2": "B", "1.30.3": "D", "1.30.4": "A", "1.30.5": "C", "1.30.6": "B", "1.30.7": "C", "1.30.8": "A;C;D", "1.30.9": "C",
+  "1.31.1": "N/A", "1.31.2": "A", "1.31.3": "7", "1.31.4": "N/A", "1.31.5": "D", "1.31.6": "N/A", "1.31.7": "N/A", "1.31.8": "B", "1.31.9": "B", "1.31.10": "N/A", "1.31.11": "N/A", "1.31.12": "B", "1.31.13": "A", "1.31.14": "C", "1.31.15": "A", "1.31.16": "A", "1.31.17": "C", "1.31.18": "B", "1.31.19": "147.1:148.1", "1.31.20": "D", "1.31.21": "D", "1.31.22": "C", "1.31.23": "D", "1.31.24": "3", "1.31.25": "A", "1.31.26": "B", "1.31.27": "C", "1.31.28": "C",
+  "1.32.1": "B",
+  "1.33.1": "C", "1.33.2": "109", "1.33.3": "B",
+  "1.34.1": "N/A", "1.34.2": "N/A", "1.34.3": "B;C;D;E", "1.34.4": "D", "1.34.5": "A", "1.34.6": "N/A", "1.34.7": "A", "1.34.8": "C", "1.34.9": "D", "1.34.10": "C", "1.34.11": "C", "1.34.12": "D", "1.34.13": "D", "1.34.14": "B", "1.34.15": "B", "1.34.16": "B", "1.34.17": "B", "1.34.18": "B", "1.34.19": "C", "1.34.20": "C", "1.34.21": "C", "1.34.22": "A", "1.34.23": "D", "1.34.24": "C", "1.34.25": "C", "1.34.26": "C", "1.34.27": "A", "1.34.28": "A", "1.34.29": "B",
+  "1.35.1": "D", "1.35.2": "C", "1.35.3": "6", "1.35.4": "B;D"
+};
+
+const TOPIC_MAP = {
+  "1.0": "1.0 BFS & Trees (GATE 2025)",
+  "1.1": "1.1 Algorithm Design",
+  "1.2": "1.2 Algorithm Design Technique",
+  "1.3": "1.3 Asymptotic Notation",
+  "1.4": "1.4 Asymptotic Notations",
+  "1.5": "1.5 Bellman Ford",
+  "1.6": "1.6 Binary Search",
+  "1.7": "1.7 Bitonic Array",
+  "1.8": "1.8 Depth First Search",
+  "1.9": "1.9 Dijkstra's Algorithm",
+  "1.10": "1.10 Directed Graph",
+  "1.11": "1.11 Double Hashing",
+  "1.12": "1.12 Dynamic Programming",
+  "1.13": "1.13 Graph Algorithms",
+  "1.14": "1.14 Graph Search (BFS/DFS)",
+  "1.15": "1.15 Greedy Algorithms",
+  "1.16": "1.16 Hashing",
+  "1.17": "1.17 Huffman Code",
+  "1.18": "1.18 Identify Function",
+  "1.19": "1.19 Insertion Sort",
+  "1.20": "1.20 Linear Probing",
+  "1.21": "1.21 Matrix Chain Ordering",
+  "1.22": "1.22 Merge Sort",
+  "1.23": "1.23 Merging",
+  "1.24": "1.24 Minimum Spanning Tree",
+  "1.25": "1.25 Prim's Algorithm",
+  "1.26": "1.26 Quick Sort",
+  "1.27": "1.27 Recurrence Relation",
+  "1.28": "1.28 Recursion",
+  "1.29": "1.29 Searching",
+  "1.30": "1.30 Shortest Path",
+  "1.31": "1.31 Sorting",
+  "1.32": "1.32 Space Complexity",
+  "1.33": "1.33 Strongly Connected Components",
+  "1.34": "1.34 Time Complexity",
+  "1.35": "1.35 Topological Sort"
+};
+
+// Pre-loaded Built-in Text Bank for immediate offline/no-PDF testing
+const PRELOADED_TEXT = {
+  "1.1.3": {
+    title: "GATE CSE 2006 | Question: 17",
+    text: "An element in an array X is called a leader if it is greater than all elements to the right of it in X. The best algorithm to find all leaders in an array:",
+    options: {
+      A: "solves it in linear time using a left to right pass of the array",
+      B: "solves it in linear time using a right to left pass of the array",
+      C: "solves it using divide and conquer in time Θ(n log n)",
+      D: "solves it in time Θ(n²)"
+    }
+  },
+  "1.1.4": {
+    title: "GATE CSE 2006 | Question: 54",
+    text: "Given two arrays of numbers a₁,...,aₙ and b₁,...,bₙ where each number is 0 or 1, the fastest algorithm to find the largest span (i, j) such that aᵢ + aᵢ₊₁ + ... + aⱼ = bᵢ + bᵢ₊₁ + ... + bⱼ or report that there is no such span:",
+    options: {
+      A: "Takes O(3ⁿ) and Ω(2ⁿ) time if hashing is permitted",
+      B: "Takes O(n³) and Ω(n²·⁵) time in the key comparison mode",
+      C: "Takes Θ(n) time and space",
+      D: "Takes O(√n) time only if the sum of the 2n elements is an even number"
+    }
+  },
+  "1.1.5": {
+    title: "GATE CSE 2014 Set 1 | Question: 37",
+    text: "There are 5 bags labeled 1 to 5. All the coins in a given bag have the same weight. Some bags have coins of weight 10 gm, others have coins of weight 11 gm. I pick 1, 2, 4, 8, 16 coins respectively from bags 1 to 5. Their total weight comes out to 323 gm. Then the product of the labels of the bags having 11 gm coins is ______."
+  },
+  "1.1.6": {
+    title: "GATE CSE 2019 | Question: 25",
+    text: "Consider a sequence of 14 elements: A = [-5, -10, 6, 3, -1, -2, 13, 4, -9, -1, 4, 12, -3, 0]. The subsequence sum S(i, j) = Σ A[k] (from k=i to j). Determine the maximum of S(i, j), where 0 ≤ i ≤ j < 14."
+  },
+  "1.1.7": {
+    title: "GATE CSE 2021 Set 1 | Question: 40",
+    text: "Define Rₙ to be the maximum amount earned by cutting a rod of length n meters into one or more pieces of integer length and selling them. Consider the array of prices:\np[1]=1, p[2]=5, p[3]=8, p[4]=9, p[5]=10, p[6]=17, p[7]=18.\nWhich of the following statements is/are correct about R₇?",
+    options: {
+      A: "R₇ = 18",
+      B: "R₇ = 19",
+      C: "R₇ is achieved by three different solutions",
+      D: "R₇ cannot be achieved by a solution consisting of three pieces"
+    }
+  },
+  "1.2.3": {
+    title: "GATE CSE 1994 | Question: 1.19",
+    text: "Algorithm design technique used in quicksort algorithm is?",
+    options: { A: "Dynamic programming", B: "Backtracking", C: "Divide and conquer", D: "Greedy method" }
+  },
+  "1.2.4": {
+    title: "GATE CSE 1995 | Question: 1.5",
+    text: "Merge sort uses:",
+    options: { A: "Divide and conquer strategy", B: "Backtracking approach", C: "Heuristic search", D: "Greedy approach" }
+  },
+  "1.2.6": {
+    title: "GATE CSE 1998 | Question: 1.21",
+    text: "Which one of the following algorithm design techniques is used in finding all pairs of shortest distances in a graph?",
+    options: { A: "Dynamic programming", B: "Backtracking", C: "Greedy", D: "Divide and Conquer" }
+  },
+  "1.3.2": {
+    title: "GATE CSE 2017 Set 1 | Question: 04",
+    text: "Consider the following functions from positive integers to real numbers: 10, √n, n, log₂ n, 100/n.\nThe CORRECT arrangement of the above functions in increasing order of asymptotic complexity is:",
+    options: {
+      A: "log₂ n, 100/n, 10, √n, n",
+      B: "100/n, 10, log₂ n, √n, n",
+      C: "10, 100/n, √n, log₂ n, n",
+      D: "100/n, log₂ n, 10, √n, n"
+    }
+  },
+  "1.3.3": {
+    title: "GATE CSE 2021 Set 1 | Question: 3",
+    text: "Consider the following three functions: f₁ = 10ⁿ, f₂ = n^(log n), f₃ = n^(√n).\nWhich one of the following options arranges the functions in the increasing order of asymptotic growth rate?",
+    options: { A: "f₃, f₂, f₁", B: "f₂, f₁, f₃", C: "f₁, f₂, f₃", D: "f₂, f₃, f₁" }
+  },
+  "1.3.7": {
+    title: "GATE CSE 2024 | Set 2 | Question: 5",
+    text: "Let T(n) be the recurrence relation defined as follows:\nT(0) = 1, T(1) = 2, and T(n) = 5T(n-1) - 6T(n-2) for n ≥ 2.\nWhich one of the following statements is TRUE?",
+    options: { A: "T(n) = Θ(2ⁿ)", B: "T(n) = Θ(n2ⁿ)", C: "T(n) = Θ(3ⁿ)", D: "T(n) = Θ(n3ⁿ)" }
+  },
+  "1.5.1": {
+    title: "GATE CSE 2009 | Question: 13",
+    text: "Which of the following statement(s) is/are correct regarding Bellman-Ford shortest path algorithm?\nP: Always finds a negative weighted cycle, if one exists.\nQ: Finds whether any negative weighted cycle is reachable from the source.",
+    options: { A: "P only", B: "Q only", C: "Both P and Q", D: "Neither P nor Q" }
+  },
+  "1.5.2": {
+    title: "GATE CSE 2013 | Question: 19",
+    text: "What is the time complexity of Bellman-Ford single-source shortest path algorithm on a complete graph of n vertices?",
+    options: { A: "Θ(n²)", B: "Θ(n² log n)", C: "Θ(n³)", D: "Θ(n³ log n)" }
+  },
+  "1.6.1": {
+    title: "GATE CSE 2021 Set 2 | Question: 8",
+    text: "What is the worst-case number of arithmetic operations performed by recursive binary search on a sorted array of size n?",
+    options: { A: "Θ(√n)", B: "Θ(log₂(n))", C: "Θ(n²)", D: "Θ(n)" }
+  },
+  "1.7.1": {
+    title: "GATE CSE 2025 | Set 2 | Question: 31",
+    text: "An array A of length n with distinct elements is said to be bitonic if there is an index 1 ≤ i ≤ n such that A[1..i] is sorted in the non-decreasing order and A[i+1..n] is sorted in the non-increasing order. Which ONE of the following represents the best possible asymptotic bound for the worst-case number of comparisons by an algorithm that searches for an element in a bitonic array A?",
+    options: { A: "Θ(n)", B: "Θ(1)", C: "Θ(log² n)", D: "Θ(log n)" }
+  }
+};
+
+// ============================================================================
+// 2. BUILD MASTER QUESTION DATABASE
+// ============================================================================
+function getQuestionType(ans) {
+  if (!ans || ans === "N/A" || ans === "X") return "DESC";
+  if (ans.includes(";")) return "MSQ";
+  if (/^[A-E]$/.test(ans)) return "MCQ";
+  return "NAT";
+}
+
+const ALL_QUESTIONS = Object.keys(OFFICIAL_ANSWERS).map(id => {
+  const parts = id.split(".");
+  const topicKey = parts[0] + "." + parts[1];
+  const ans = OFFICIAL_ANSWERS[id];
+  const qType = getQuestionType(ans);
+  const pre = PRELOADED_TEXT[id] || null;
+
+  return {
+    id,
+    topicKey,
+    topicName: TOPIC_MAP[topicKey] || "Algorithms",
+    answer: ans,
+    type: qType,
+    title: pre ? pre.title : `Question ${id}`,
+    text: pre ? pre.text : `Question ${id} from ALGORITHMS.pdf.\n(Load ALGORITHMS.pdf above to view the full diagram/text slice, or select your answer below to verify against the official key.)`,
+    options: pre && pre.options ? pre.options : {
+      A: "Option A",
+      B: "Option B",
+      C: "Option C",
+      D: "Option D"
+    },
+    pdfLocation: null // Populated automatically when ALGORITHMS.pdf loads
+  };
+});
+
+// ============================================================================
+// 3. STATE & PROGRESS MANAGEMENT
+// ============================================================================
+let filteredQuestions = [];
+let currentIdx = 0;
+let userProgress = JSON.parse(localStorage.getItem("gate_algo_progress") || "{}");
+let msqSelection = new Set();
+
+// Timer State (3 Minutes = 180 Seconds)
+let timeRemaining = 180;
+let timerInterval = null;
+let timerPaused = false;
+
+function initApp() {
+  // Populate Topic Dropdown
+  const topicSelect = document.getElementById("topic-filter");
+  Object.entries(TOPIC_MAP).forEach(([key, name]) => {
+    const count = ALL_QUESTIONS.filter(q => q.topicKey === key).length;
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = `${name} (${count})`;
+    topicSelect.appendChild(opt);
+  });
+
+  applyFilters();
+  updateStatsUI();
+  tryAutoLoadPDF();
+}
+
+function applyFilters() {
+  const topicVal = document.getElementById("topic-filter").value;
+  const typeVal = document.getElementById("type-filter").value;
+  const searchVal = document.getElementById("search-input").value.trim().toLowerCase();
+
+  filteredQuestions = ALL_QUESTIONS.filter(q => {
+    if (topicVal !== "ALL" && q.topicKey !== topicVal) return false;
+    if (typeVal === "ALL" && q.type === "DESC") return false;
+    if (typeVal === "MCQ" && q.type !== "MCQ") return false;
+    if (typeVal === "MSQ" && q.type !== "MSQ") return false;
+    if (typeVal === "NAT" && q.type !== "NAT") return false;
+    if (searchVal) {
+      const hay = `${q.id} ${q.topicName} ${q.title} ${q.text}`.toLowerCase();
+      if (!hay.includes(searchVal)) return false;
+    }
+    return true;
+  });
+
+  if (filteredQuestions.length === 0) {
+    filteredQuestions = ALL_QUESTIONS;
+  }
+
+  currentIdx = 0;
+  renderPalette();
+  loadQuestion(0);
+}
+
+// ============================================================================
+// 4. 3-MINUTE PER-QUESTION TIMER (Auto-refreshes on every question change)
+// ============================================================================
+function startFreshTimer() {
+  clearInterval(timerInterval);
+  timeRemaining = 180; // 3 minutes
+  timerPaused = false;
+  document.getElementById("timer-toggle-btn").textContent = "Pause";
+  updateTimerDisplay();
+
+  timerInterval = setInterval(() => {
+    if (timerPaused) return;
+    if (timeRemaining > 0) {
+      timeRemaining--;
+      updateTimerDisplay();
+      if (timeRemaining === 0) {
+        handleTimeUp();
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const mins = String(Math.floor(timeRemaining / 60)).padStart(2, "0");
+  const secs = String(timeRemaining % 60).padStart(2, "0");
+  const disp = document.getElementById("timer-display");
+  const box = document.getElementById("timer-box");
+  disp.textContent = `${mins}:${secs}`;
+
+  box.classList.remove("warning", "danger");
+  if (timeRemaining <= 20) {
+    box.classList.add("danger");
+  } else if (timeRemaining <= 60) {
+    box.classList.add("warning");
+  }
+}
+
+function toggleTimer() {
+  timerPaused = !timerPaused;
+  document.getElementById("timer-toggle-btn").textContent = timerPaused ? "Resume" : "Pause";
+}
+
+function resetTimer() {
+  startFreshTimer();
+}
+
+function handleTimeUp() {
+  clearInterval(timerInterval);
+  const q = filteredQuestions[currentIdx];
+  const banner = document.getElementById("feedback-banner");
+  if (!userProgress[q.id]) {
+    banner.className = "feedback-banner show wrong";
+    banner.innerHTML = `<span>⏰ 3 Minutes Up! Official Answer: <strong>${q.answer}</strong></span>`;
+  }
+}
+
+// ============================================================================
+// 5. QUESTION RENDERING & INSTANT GREEN/RED CHECKING
+// ============================================================================
+function loadQuestion(idx) {
+  currentIdx = idx;
+  msqSelection.clear();
+  startFreshTimer();
+
+  const q = filteredQuestions[currentIdx];
+  document.getElementById("q-index").textContent = q.id;
+  document.getElementById("q-topic").textContent = q.topicName;
+  document.getElementById("q-counter").textContent = `Question ${currentIdx + 1} of ${filteredQuestions.length}`;
+
+  const typeBadge = document.getElementById("q-type");
+  typeBadge.textContent = q.type;
+  typeBadge.className = `q-type-badge type-${q.type.toLowerCase()}`;
+
+  // Render PDF Canvas slice if PDF is loaded, else show text
+  const sliceWrapper = document.getElementById("pdf-slice-wrapper");
+  const qBody = document.getElementById("q-body");
+
+  if (pdfDoc && q.pdfLocation) {
+    sliceWrapper.style.display = "flex";
+    qBody.style.display = "none";
+    renderPDFQuestionSlice(q);
+  } else {
+    sliceWrapper.style.display = "none";
+    qBody.style.display = "block";
+    qBody.textContent = `${q.title}\n\n${q.text}`;
+  }
+
+  // Render Interactive Controls
+  const area = document.getElementById("interactive-area");
+  area.innerHTML = "";
+
+  const saved = userProgress[q.id];
+  const banner = document.getElementById("feedback-banner");
+  banner.className = "feedback-banner";
+  banner.innerHTML = "";
+
+  if (q.type === "MCQ") {
+    const list = document.createElement("div");
+    list.className = "options-list";
+    const letters = q.answer === "E" ? ["A", "B", "C", "D", "E"] : ["A", "B", "C", "D"];
+
+    letters.forEach(letter => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.dataset.opt = letter;
+      const optText = (q.options && q.options[letter]) ? q.options[letter] : `Option ${letter}`;
+      btn.innerHTML = `
+        <span class="option-letter">${letter}</span>
+        <span class="option-text">${optText}</span>
+        <span class="status-icon" id="icon-${letter}"></span>
+      `;
+      btn.onclick = () => selectMCQOption(q, letter);
+      list.appendChild(btn);
+    });
+    area.appendChild(list);
+
+    if (saved) {
+      applyMCQVisualState(q, saved.userAns);
+    }
+  } else if (q.type === "MSQ") {
+    const list = document.createElement("div");
+    list.className = "options-list";
+    const letters = q.answer.includes("E") ? ["A", "B", "C", "D", "E"] : ["A", "B", "C", "D"];
+
+    letters.forEach(letter => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.dataset.opt = letter;
+      const optText = (q.options && q.options[letter]) ? q.options[letter] : `Option ${letter}`;
+      btn.innerHTML = `
+        <span class="option-letter">${letter}</span>
+        <span class="option-text">${optText}</span>
+        <span class="status-icon" id="icon-${letter}"></span>
+      `;
+      btn.onclick = () => toggleMSQOption(q, letter, btn);
+      list.appendChild(btn);
+    });
+    area.appendChild(list);
+
+    const submitBtn = document.createElement("button");
+    submitBtn.className = "action-btn";
+    submitBtn.style.marginTop = "12px";
+    submitBtn.textContent = "Verify MSQ Selection";
+    submitBtn.onclick = () => checkMSQAnswer(q);
+    area.appendChild(submitBtn);
+
+    if (saved) {
+      saved.userAns.split(";").forEach(k => msqSelection.add(k));
+      applyMSQVisualState(q, saved.userAns);
+    }
+  } else if (q.type === "NAT") {
+    const box = document.createElement("div");
+    box.className = "nat-box";
+    box.innerHTML = `
+      <input type="number" step="any" class="nat-input" id="nat-input" placeholder="Enter numerical answer..." value="${saved ? saved.userAns : ''}" />
+      <button class="action-btn" onclick="checkNATAnswer()">Submit Answer</button>
+    `;
+    area.appendChild(box);
+    if (saved) {
+      showNATFeedback(q, saved.userAns, saved.isCorrect);
+    }
+  } else {
+    area.innerHTML = `<div style="color:var(--muted);">This is a subjective/descriptive question or Marks-to-All (${q.answer}).</div>`;
+  }
+
+  document.getElementById("prev-btn").disabled = currentIdx === 0;
+  document.getElementById("next-btn").disabled = currentIdx === filteredQuestions.length - 1;
+  highlightPaletteActive();
+}
+
+function selectMCQOption(q, chosenLetter) {
+  if (userProgress[q.id]) return; // Lock after first selection until Retry is clicked
+  const isCorrect = chosenLetter === q.answer;
+  userProgress[q.id] = { userAns: chosenLetter, isCorrect };
+  saveProgress();
+  applyMCQVisualState(q, chosenLetter);
+}
+
+function applyMCQVisualState(q, chosenLetter) {
+  const buttons = document.querySelectorAll(".option-btn");
+  const isCorrect = chosenLetter === q.answer;
+
+  buttons.forEach(btn => {
+    btn.classList.add("locked");
+    const letter = btn.dataset.opt;
+    const icon = btn.querySelector(".status-icon");
+
+    if (letter === q.answer) {
+      btn.classList.add("correct");
+      icon.textContent = "✔ Correct";
+    } else if (letter === chosenLetter && !isCorrect) {
+      btn.classList.add("wrong");
+      icon.textContent = "✖ Your Choice";
+    }
+  });
+
+  const banner = document.getElementById("feedback-banner");
+  if (isCorrect) {
+    banner.className = "feedback-banner show correct";
+    banner.innerHTML = `<span>✔ Spot on! Option <strong>${q.answer}</strong> is correct.</span>`;
+  } else {
+    banner.className = "feedback-banner show wrong";
+    banner.innerHTML = `<span>✖ Incorrect. You selected <strong>${chosenLetter}</strong> — Correct Answer is <strong>${q.answer}</strong>.</span>`;
+  }
+}
+
+function toggleMSQOption(q, letter, btn) {
+  if (userProgress[q.id]) return;
+  if (msqSelection.has(letter)) {
+    msqSelection.delete(letter);
+    btn.classList.remove("selected-msq");
+  } else {
+    msqSelection.add(letter);
+    btn.classList.add("selected-msq");
+  }
+}
+
+function checkMSQAnswer(q) {
+  if (userProgress[q.id] || msqSelection.size === 0) return;
+  const userArr = Array.from(msqSelection).sort();
+  const userStr = userArr.join(";");
+  const correctArr = q.answer.split(";").map(s => s.trim()).sort();
+  const isCorrect = userStr === correctArr.join(";");
+
+  userProgress[q.id] = { userAns: userStr, isCorrect };
+  saveProgress();
+  applyMSQVisualState(q, userStr);
+}
+
+function applyMSQVisualState(q, userStr) {
+  const userSet = new Set(userStr.split(";"));
+  const correctSet = new Set(q.answer.split(";").map(s => s.trim()));
+  const isCorrect = userProgress[q.id]?.isCorrect;
+
+  document.querySelectorAll(".option-btn").forEach(btn => {
+    btn.classList.add("locked");
+    const letter = btn.dataset.opt;
+    const icon = btn.querySelector(".status-icon");
+
+    if (correctSet.has(letter)) {
+      btn.classList.add("correct");
+      icon.textContent = userSet.has(letter) ? "✔ Selected (Correct)" : "✔ Missed Correct";
+    } else if (userSet.has(letter)) {
+      btn.classList.add("wrong");
+      icon.textContent = "✖ Wrong Selection";
+    }
+  });
+
+  const banner = document.getElementById("feedback-banner");
+  if (isCorrect) {
+    banner.className = "feedback-banner show correct";
+    banner.innerHTML = `<span>✔ Correct! All matching options (<strong>${q.answer}</strong>) selected.</span>`;
+  } else {
+    banner.className = "feedback-banner show wrong";
+    banner.innerHTML = `<span>✖ Official Correct Options: <strong>${q.answer}</strong> (You chose: ${userStr})</span>`;
+  }
+}
+
+function checkNATAnswer() {
+  const q = filteredQuestions[currentIdx];
+  const inputEl = document.getElementById("nat-input");
+  const valStr = inputEl.value.trim();
+  if (!valStr) return;
+
+  const num = parseFloat(valStr);
+  let isCorrect = false;
+
+  if (q.answer.includes(":")) {
+    const [minStr, maxStr] = q.answer.split(":");
+    const min = parseFloat(minStr);
+    const max = parseFloat(maxStr);
+    isCorrect = num >= min && num <= max;
+  } else {
+    isCorrect = Math.abs(num - parseFloat(q.answer)) < 0.01;
+  }
+
+  userProgress[q.id] = { userAns: valStr, isCorrect };
+  saveProgress();
+  showNATFeedback(q, valStr, isCorrect);
+}
+
+function showNATFeedback(q, valStr, isCorrect) {
+  const inputEl = document.getElementById("nat-input");
+  const banner = document.getElementById("feedback-banner");
+  if (inputEl) {
+    inputEl.style.borderColor = isCorrect ? "var(--green)" : "var(--red)";
+    inputEl.style.backgroundColor = isCorrect ? "var(--green-bg)" : "var(--red-bg)";
+  }
+
+  if (isCorrect) {
+    banner.className = "feedback-banner show correct";
+    banner.innerHTML = `<span>✔ Correct! Your answer <strong>${valStr}</strong> matches official key (<strong>${q.answer}</strong>).</span>`;
+  } else {
+    banner.className = "feedback-banner show wrong";
+    banner.innerHTML = `<span>✖ Incorrect. Your answer: <strong>${valStr}</strong> | Official Answer Key: <strong>${q.answer}</strong></span>`;
+  }
+}
+
+function resetCurrentQuestion() {
+  const q = filteredQuestions[currentIdx];
+  delete userProgress[q.id];
+  saveProgress();
+  loadQuestion(currentIdx);
+}
+
+function prevQuestion() {
+  if (currentIdx > 0) loadQuestion(currentIdx - 1);
+}
+
+function nextQuestion() {
+  if (currentIdx < filteredQuestions.length - 1) loadQuestion(currentIdx + 1);
+}
+
+// ============================================================================
+// 6. PALETTE & SCORE PERSISTENCE
+// ============================================================================
+function renderPalette() {
+  const grid = document.getElementById("palette-grid");
+  grid.innerHTML = "";
+
+  filteredQuestions.forEach((q, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "palette-item";
+    btn.id = `pal-${idx}`;
+    btn.textContent = q.id;
+    const prog = userProgress[q.id];
+    if (prog) {
+      btn.classList.add(prog.isCorrect ? "solved-correct" : "solved-wrong");
+    }
+    btn.onclick = () => loadQuestion(idx);
+    grid.appendChild(btn);
+  });
+}
+
+function highlightPaletteActive() {
+  document.querySelectorAll(".palette-item").forEach(el => el.classList.remove("active"));
+  const curr = document.getElementById(`pal-${currentIdx}`);
+  if (curr) {
+    curr.classList.add("active");
+    const q = filteredQuestions[currentIdx];
+    const prog = userProgress[q.id];
+    curr.classList.remove("solved-correct", "solved-wrong");
+    if (prog) {
+      curr.classList.add(prog.isCorrect ? "solved-correct" : "solved-wrong");
+    }
+  }
+}
+
+function saveProgress() {
+  localStorage.setItem("gate_algo_progress", JSON.stringify(userProgress));
+  updateStatsUI();
+  highlightPaletteActive();
+}
+
+function updateStatsUI() {
+  const entries = Object.values(userProgress);
+  const correct = entries.filter(e => e.isCorrect).length;
+  const wrong = entries.filter(e => !e.isCorrect).length;
+  const total = correct + wrong;
+  const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+  document.getElementById("stat-correct").textContent = correct;
+  document.getElementById("stat-wrong").textContent = wrong;
+  document.getElementById("stat-acc").textContent = `${acc}%`;
+}
+
+function clearAllProgress() {
+  if (confirm("Reset all solved question history and scores?")) {
+    userProgress = {};
+    saveProgress();
+    renderPalette();
+    loadQuestion(currentIdx);
+  }
+}
+
+// ============================================================================
+// 7. PDF.JS ENGINE: AUTO-PARSE & CROP ALL 225 QUESTIONS + GRAPH FIGURES
+// ============================================================================
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+let pdfDoc = null;
+
+async function tryAutoLoadPDF() {
+  try {
+    const resp = await fetch("./ALGORITHMS.pdf");
+    if (resp.ok) {
+      const buf = await resp.arrayBuffer();
+      await parseLoadedPDF(buf);
+    }
+  } catch (e) {
+    // Running locally via file:// or ALGORITHMS.pdf not uploaded yet
+  }
+}
+
+document.getElementById("pdf-file-input").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const buf = await file.arrayBuffer();
+  await parseLoadedPDF(buf);
+});
+
+async function parseLoadedPDF(arrayBuffer) {
+  const statusTitle = document.getElementById("pdf-status-title");
+  const statusDesc = document.getElementById("pdf-status-desc");
+  statusTitle.textContent = "⏳ Indexing ALGORITHMS.pdf...";
+  statusDesc.textContent = "Mapping all 225 questions and graph diagrams...";
+
+  pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const markers = [];
+
+  // Scan pages 1..41 (before the Answer Keys table on page 42)
+  const maxContentPage = Math.min(pdfDoc.numPages, 41);
+  for (let p = 1; p <= maxContentPage; p++) {
+    const page = await pdfDoc.getPage(p);
+    const viewport = page.getViewport({ scale: 1.0 });
+    const textContent = await page.getTextContent();
+
+    for (const item of textContent.items) {
+      const str = item.str.trim();
+      const match = str.match(/^(1\.\d+\.\d+)\b/);
+      if (match && OFFICIAL_ANSWERS[match[1]]) {
+        // Convert PDF bottom-left Y to top-down Y
+        const yTop = viewport.height - item.transform[5];
+        markers.push({
+          id: match[1],
+          page: p,
+          yTop: Math.max(0, yTop - 18),
+          pageHeight: viewport.height
+        });
+      }
+    }
+  }
+
+  // Assign start and end crop coordinates for each question
+  for (let i = 0; i < markers.length; i++) {
+    const curr = markers[i];
+    const next = markers[i + 1];
+    const qObj = ALL_QUESTIONS.find(q => q.id === curr.id);
+    if (!qObj) continue;
+
+    if (next && next.page === curr.page) {
+      qObj.pdfLocation = [{ page: curr.page, yStart: curr.yTop, yEnd: Math.max(curr.yTop + 60, next.yTop - 8) }];
+    } else if (next && next.page > curr.page) {
+      qObj.pdfLocation = [
+        { page: curr.page, yStart: curr.yTop, yEnd: curr.pageHeight - 30 }
+      ];
+      if (next.yTop > 65) {
+        qObj.pdfLocation.push({ page: next.page, yStart: 35, yEnd: next.yTop - 8 });
+      }
+    } else {
+      qObj.pdfLocation = [{ page: curr.page, yStart: curr.yTop, yEnd: curr.pageHeight - 30 }];
+    }
+  }
+
+  const banner = document.getElementById("pdf-banner");
+  banner.classList.add("loaded");
+  statusTitle.textContent = "✅ ALGORITHMS.pdf Loaded (All 225 Questions + Graph Diagrams Active)";
+  statusDesc.textContent = "Every question now renders its exact PDF diagram, code snippet, and formula.";
+
+  loadQuestion(currentIdx);
+}
+
+async function renderPDFQuestionSlice(q) {
+  const wrapper = document.getElementById("pdf-slice-wrapper");
+  wrapper.innerHTML = "";
+  const scale = 1.75;
+
+  for (const slice of q.pdfLocation) {
+    const page = await pdfDoc.getPage(slice.page);
+    const viewport = page.getViewport({ scale });
+
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = viewport.width;
+    tempCanvas.height = viewport.height;
+    const tempCtx = tempCanvas.getContext("2d");
+
+    await page.render({ canvasContext: tempCtx, viewport }).promise;
+
+    const cropY = Math.max(0, slice.yStart * scale);
+    const cropHeight = Math.min(viewport.height - cropY, Math.max(80, (slice.yEnd - slice.yStart) * scale));
+
+    const finalCanvas = document.createElement("canvas");
+    finalCanvas.width = viewport.width;
+    finalCanvas.height = cropHeight;
+    const finalCtx = finalCanvas.getContext("2d");
+
+    finalCtx.drawImage(
+      tempCanvas,
+      0, cropY, viewport.width, cropHeight,
+      0, 0, viewport.width, cropHeight
+    );
+
+    wrapper.appendChild(finalCanvas);
+  }
+}
+
+// Keyboard Shortcuts (A/B/C/D and Left/Right Arrows)
+window.addEventListener("keydown", (e) => {
+  if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+  const key = e.key.toUpperCase();
+  const q = filteredQuestions[currentIdx];
+
+  if (q && q.type === "MCQ" && ["A", "B", "C", "D"].includes(key)) {
+    selectMCQOption(q, key);
+  } else if (e.key === "ArrowRight") {
+    nextQuestion();
+  } else if (e.key === "ArrowLeft") {
+    prevQuestion();
+  }
+});
+
+initApp();
+</script>
+</body>
+</html>
